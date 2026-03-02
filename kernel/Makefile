@@ -11,14 +11,21 @@ KERNEL_DIR = kernel
 BUILD_DIR = build
 LINKER_SCRIPT = $(ARCH_DIR)/linker.ld
 
-vpath %.c $(ARCH_DIR) $(KERNEL_DIR)
-vpath %.nasm $(ARCH_DIR)
+vpath %.c $(ARCH_DIR) $(KERNEL_DIR) $(ARCH_DIR)/gdt $(ARCH_DIR)/idt
+vpath %.nasm $(ARCH_DIR) $(ARCH_DIR)/gdt $(ARCH_DIR)/idt
 
 CRTI_OBJ = $(BUILD_DIR)/crti.o
 CRTN_OBJ = $(BUILD_DIR)/crtn.o
 
 OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/tty.o \
+			 $(BUILD_DIR)/gdt.o \
+			 $(BUILD_DIR)/gdt_flush.o \
+			 $(BUILD_DIR)/idt.o \
+			 $(BUILD_DIR)/idt_flush.o \
+			 $(BUILD_DIR)/isr.o \
+			 $(BUILD_DIR)/pic.o \
+			 $(BUILD_DIR)/keyboard.o \
        $(BUILD_DIR)/kernel.o
 
 CRTBEGIN_OBJ := $(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)

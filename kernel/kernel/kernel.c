@@ -1,12 +1,14 @@
+#include "arch/i386/gdt/gdt.h"
+#include "arch/i386/idt/idt.h"
 #include "kernel/tty.h"
 #include "stdio.h"
 
 void kernel_main(void)
 {
   terminal_init();
-  int a = -50;
-  for (int i = 0; i < 30; i++)
-  {
-    printf("For: %d\n", a++);
-  }
+  gdt_init();
+  idt_init();
+
+  printf("kernel: Initialized.\n");
+  while (1);
 }
