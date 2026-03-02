@@ -5,7 +5,17 @@ BUILD_DIR = build
 
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -I./include
 
-SRCS = string/strlen.c
+SRCS = string/memset.c \
+			 string/memsetw.c \
+			 string/memcpy.c \
+			 string/memmove.c \
+			 string/memcmp.c \
+			 string/strlen.c \
+			 string/strcpy.c \
+			 string/strncpy.c \
+			 string/strlcpy.c \
+			 string/strcmp.c \
+			 string/strncmp.c
 
 OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(SRCS)))
 vpath %.c $(sort $(dir $(SRCS)))
