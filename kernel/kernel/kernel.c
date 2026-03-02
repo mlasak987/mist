@@ -1,12 +1,12 @@
 #include "kernel/tty.h"
+#include "stdio.h"
 
 void kernel_main(void)
 {
   terminal_init();
-  for (;;)
+  int a = -50;
+  for (int i = 0; i < 30; i++)
   {
-    terminal_writestr("Hello, World!\n");
-    terminal_writestr("Kernel\n");
-    terminal_writestr("Test\n");
+    printf("For: %d\n", a++);
   }
 }
