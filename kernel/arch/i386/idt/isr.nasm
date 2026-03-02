@@ -1,10 +1,22 @@
-global isr33
-extern keyboard_handler
+; Interrupt handlers
 
-; keyboard_handler interrupt call
+global isr33
+extern kbd_handler
+
 isr33:
   pusha
   cld
-  call keyboard_handler
+  call kbd_handler
   popa
+  iret
+
+global isr14
+extern page_fault_handler
+
+isr14:
+  pusha
+  cld
+  call page_fault_handler
+  popa
+  add esp, 4
   iret

@@ -1,5 +1,6 @@
 global gdt_flush
 
+; void gdt_flush(uint32_t gdt_ptr);
 gdt_flush:
   mov eax, [esp+4]
   lgdt [eax] ; Load idt

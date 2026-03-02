@@ -28,14 +28,14 @@ void gdt_init(void)
   // Null
   gdt_set_gate(0, 0, 0, 0, 0);
 
-  // Code (4GB)
+  // Code Segment
   // 0x9A = 10011010 (Present=1, Privilege=00, Type=Code/Exec/Read)
   // 0xCF = 11001111 (Granularity=4KB, 32-bit operation, Limit=F)
   gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
 
-  // Data (4GB)
+  // Data Segment
   // 0x92 = 10010010 (Present=1, Privilege=00, Type=Data/Read/Write)
-  // 0xCF = 10010010 (Present=1, Privilege=00, Type=Data/Read/Write)
+  // 0xCF = 10010010 (Granularity=4KB, 32-bit operation, Limit=F)
   gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
 
   gdt_flush((uint32_t)&gp);
