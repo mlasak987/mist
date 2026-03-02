@@ -21,11 +21,25 @@ void terminal_init(void)
   memsetw(terminal_buffer, empty, VGA_WIDTH * VGA_HEIGHT);
 }
 
+void terminal_scroll()
+{
+  uint16_t empty = vga_entry(' ', terminal_color);
+  memmove(terminal_buffer,
+          terminal_buffer + VGA_WIDTH,
+          VGA_WIDTH * (VGA_HEIGHT - 1) * sizeof(uint16_t));
+  memsetw(terminal_buffer + VGA_WIDTH * (VGA_HEIGHT - 1),
+          empty,
+          VGA_WIDTH);
+}
+
 void terminal_newline()
 {
   terminal_column = 0;
   if (++terminal_row == VGA_HEIGHT)
-    terminal_row = 0;
+  {
+    terminal_scroll();
+    terminal_row--;
+  }
 }
 
 void terminal_putchar(char c)

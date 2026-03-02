@@ -3,6 +3,10 @@
 void kernel_main(void)
 {
   terminal_init();
-  terminal_writestr("Hello, World!\n");
-  terminal_writestr("Kernel\n");
+  for (;;)
+  {
+    terminal_writestr("Hello, World!\n");
+    terminal_writestr("Kernel\n");
+    terminal_writestr("Test\n");
+  }
 }
