@@ -1,0 +1,8 @@
+-xc
+-m32
+-ffreestanding
+-nostdlibinc
+-I./kernel/include
+-I./libc/include
+-Wall
+-Wextra

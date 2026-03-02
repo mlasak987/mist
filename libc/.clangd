@@ -1,0 +1,14 @@
+CompileFlags:
+  Add: 
+    - -ffreestanding
+    - --target=i686-elf
+    - -Iinclude
+    - -I.
+    - -Wall
+    - -Wextra
+
+Index:
+  Background: Build
+
+Diagnostics:
+  UnusedIncludes: None
