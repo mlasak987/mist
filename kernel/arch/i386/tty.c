@@ -17,12 +17,8 @@ void terminal_init(void)
   terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
   terminal_buffer = VGA_MEMORY;
 
-  for (size_t row = 0; row < VGA_HEIGHT; row++)
-    for (size_t column = 0; column < VGA_WIDTH; column++)
-    {
-      const size_t idx = row * VGA_WIDTH + column;
-      terminal_buffer[idx] = vga_entry(' ', terminal_color);
-    }
+  uint16_t empty = vga_entry(' ', terminal_color);
+  memsetw(terminal_buffer, empty, VGA_WIDTH * VGA_HEIGHT);
 }
 
 void terminal_newline()
