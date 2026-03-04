@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
+
 #include "arch/i386/io.h"
-#include "arch/i386/ps2_kbd.h"
+#include "drivers/ps2_kbd.h"
 
 #define KBD_BUFFER_SIZE 256
 
@@ -9,13 +11,15 @@ static char kbd_buffer[KBD_BUFFER_SIZE];
 static volatile int kbd_head = 0;
 static volatile int kbd_tail = 0;
 
+// 72 - up, 75 - left, 80 - down, 77 - right
+
 const char scancode_to_ascii[] = {
   0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
   '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
   0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
   0, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0,
   '*', 0, ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  '-', 0, 0, 0, '+', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  '-', 0, 0, 0, '+', 0, 0, 0, 0, 127, 0, 0, 0, 0, 0, 0
 };
 
 void kbd_handler(void)

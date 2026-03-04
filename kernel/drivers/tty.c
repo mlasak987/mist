@@ -1,9 +1,9 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "kernel/tty.h"
+#include "drivers/tty.h"
+#include "drivers/vga.h"
 #include "arch/i386/io.h"
-#include "vga.h"
 
 static size_t terminal_row;
 static size_t terminal_column;

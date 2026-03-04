@@ -2,34 +2,34 @@ CC = i686-elf-gcc
 AS = nasm
 LD = i686-elf-gcc
 
-CFLAGS = -ffreestanding -O2 -Wall -Wextra -I./include/ -I../libc/include/
+ARCH ?= i386
+LOG_LEVEL ?= INFO
+VER ?= 0.1.0
+
+CFLAGS = -ffreestanding -O2 -Wall -Wextra -I./include/ -I../libc/include/ -DLOG_LEVEL_$(LOG_LEVEL) -D__KERNEL_ARCH_=\"$(ARCH)\" -D__OS_VERSION_=\"$(VER)\" -MD -MP
 ASFLAGS = -f elf32
 LDFLAGS = -ffreestanding -O2 -nostdlib -lgcc
 
-ARCH_DIR = arch/i386
-KERNEL_DIR = kernel
+SRC_DIRS = arch/$(ARCH) kernel drivers mm shell
 BUILD_DIR = build
-LINKER_SCRIPT = $(ARCH_DIR)/linker.ld
+LINKER_SCRIPT = arch/$(ARCH)/linker.ld
 
-vpath %.c $(ARCH_DIR) $(KERNEL_DIR) $(ARCH_DIR)/gdt $(ARCH_DIR)/idt $(ARCH_DIR)/paging
-vpath %.nasm $(ARCH_DIR) $(ARCH_DIR)/gdt $(ARCH_DIR)/idt $(ARCH_DIR)/paging
+ALL_C_SRCS = $(shell find $(SRC_DIRS) -type f -name '*.c')
+ALL_NASM_SRCS = $(shell find $(SRC_DIRS) -type f -name '*.nasm')
 
-CRTI_OBJ = $(BUILD_DIR)/crti.o
-CRTN_OBJ = $(BUILD_DIR)/crtn.o
+CRTI_SRC = $(shell find arch/$(ARCH) -name 'crti.nasm' -o -name 'crti.c' | head -n 1)
+CRTN_SRC = $(shell find arch/$(ARCH) -name 'crtn.nasm' -o -name 'crtn.c' | head -n 1)
 
-OBJS = $(BUILD_DIR)/boot.o \
-       $(BUILD_DIR)/tty.o \
-			 $(BUILD_DIR)/gdt.o \
-			 $(BUILD_DIR)/gdt_flush.o \
-			 $(BUILD_DIR)/idt.o \
-			 $(BUILD_DIR)/idt_flush.o \
-			 $(BUILD_DIR)/isr.o \
-			 $(BUILD_DIR)/pic.o \
-			 $(BUILD_DIR)/ps2_kbd.o \
-			 $(BUILD_DIR)/pmm.o \
-			 $(BUILD_DIR)/paging.o \
-			 $(BUILD_DIR)/paging_flush.o \
-       $(BUILD_DIR)/kernel.o
+C_SRCS = $(filter-out $(CRTI_SRC) $(CRTN_SRC), $(ALL_C_SRCS))
+NASM_SRCS = $(filter-out $(CRTI_SRC) $(CRTN_SRC), $(ALL_NASM_SRCS))
+
+OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(C_SRCS))) \
+       $(patsubst %.nasm, $(BUILD_DIR)/%.o, $(notdir $(NASM_SRCS)))
+
+CRTI_OBJ = $(BUILD_DIR)/$(basename $(notdir $(CRTI_SRC))).o
+CRTN_OBJ = $(BUILD_DIR)/$(basename $(notdir $(CRTN_SRC))).o
+
+VPATH = $(sort $(dir $(ALL_C_SRCS) $(ALL_NASM_SRCS)))
 
 CRTBEGIN_OBJ := $(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
 CRTEND_OBJ   := $(shell $(CC) $(CFLAGS) -print-file-name=crtend.o)
@@ -65,4 +65,6 @@ clean:
 	rm -f $(KERNEL)
 
 run: $(KERNEL)
-	qemu-system-i386 -kernel $(KERNEL)
+	qemu-system-$(ARCH) -kernel $(KERNEL)
+
+-include $(OBJS:.o=.d)

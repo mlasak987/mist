@@ -1,8 +1,9 @@
-#include "kernel/pmm.h"
 #include <string.h>
 #include <stdio.h>
 
-// 131072 bytes * 8 bits = 1 048 576 blocks (po 4 KB) = 4 GB physical memory
+#include "mm/pmm.h"
+
+// 131072 bytes * 8 bits = 1 048 576 blocks (4 KB) = 4 GB physical memory
 #define BITMAP_SIZE 131072
 
 static uint8_t pmm_bitmap[BITMAP_SIZE];
@@ -31,7 +32,7 @@ void pmm_init(multiboot_info_t* mbd)
 
   if (!(mbd->flags & (1 << 6)))
   {
-    printf("pmm: Missing memory map from bootloader!\n");
+    printf("[ ERROR ] Mist: Missing memory map from bootloader!\n");
     return;
   }
 
@@ -64,7 +65,7 @@ void pmm_init(multiboot_info_t* mbd)
   for (uint32_t i = 0; i < kernel_blocks; i++)
     bitmap_set(i);
 
-  printf("pmm: Initialized. Max blocks: %d\n", max_blocks);
+  printf("[ INFO ] Mist: PMM initialized. Max blocks: %d (4KB)\n", max_blocks);
 }
 
 void* pmm_alloc_block(void)

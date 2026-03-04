@@ -17,7 +17,7 @@ void paging_init(void)
   load_page_directory(page_directory);
   enable_paging();
 
-  printf("kernel: Paging enabled.\n");
+  printf("[ INFO ] Mist: Paging enabled.\n");
 }
 
 void page_fault_handler(void)
@@ -25,7 +25,7 @@ void page_fault_handler(void)
   uint32_t faulting_address;
   asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
 
-  printf("kernel: Page Fault! Trying to access unmapped address: 0x%x\n", faulting_address);
+  printf("[ ERROR ] Mist: Page Fault! Trying to access unmapped address: 0x%x\n", faulting_address);
 
   asm volatile("cli");
   while(1) { asm volatile("hlt"); }
