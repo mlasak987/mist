@@ -1,8 +1,7 @@
-#include "kernel/tty.h"
+#include <stdio.h>
+#include "kernel/init.h"
 
-void kernel_main(void)
+void kernel_main(uint32_t magic, uint32_t multiboot_info_addr)
 {
-  terminal_init();
-  terminal_writestr("Hello, World!\n");
-  terminal_writestr("Kernel\n");
+  init(magic, (multiboot_info_t *)multiboot_info_addr);
 }
