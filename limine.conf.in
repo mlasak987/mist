@@ -1,0 +1,5 @@
+timeout: 3
+
+/Mist v@@VER@@ (@@ARCH@@)
+    protocol: limine
+    kernel_path: boot():/boot/mist.kernel

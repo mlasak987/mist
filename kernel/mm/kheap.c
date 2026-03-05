@@ -17,7 +17,7 @@ void kheap_init(void)
   heap_head->is_free = 1;
   heap_head->next = NULL;
 
-  printf("[ INFO ] Mist: Kernel heap initialized on address 0x%x (256 KB)\n", (unsigned int)heap_head);
+  printf("[ INFO ] Mist: Kernel heap initialized on address 0x%lx (256 KB)\n", (uintptr_t)heap_head);
 }
 
 void* kmalloc(size_t size)
@@ -63,9 +63,9 @@ void kfree(void* ptr)
   while (current != NULL && current->next != NULL)
     if (current->is_free && current->next->is_free)
     {
-        current->size += sizeof(heap_block_t) + current->next->size;
-        current->next = current->next->next;
+      current->size += sizeof(heap_block_t) + current->next->size;
+      current->next = current->next->next;
     }
     else
-        current = current->next;
+      current = current->next;
 }

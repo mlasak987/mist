@@ -1,9 +1,16 @@
-CC = i686-elf-gcc
-AR = i686-elf-ar
+ARCH ?= x86_64
+
+CC = $(ARCH)-elf-gcc
+AR = $(ARCH)-elf-ar
 
 BUILD_DIR = build
 
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -I./include -I../kernel/include -DLOG_LEVEL_$(LOG_LEVEL)
+
+ifeq ($(ARCH), x86_64)
+    CFLAGS += -mno-red-zone -mcmodel=kernel -mno-mmx -mno-sse -mno-sse2
+endif
+
 LIBK_CFLAGS = $(CFLAGS) -D__is_libk
 
 SRCS = $(shell find string stdio -type f -name '*.c')

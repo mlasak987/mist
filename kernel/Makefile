@@ -1,14 +1,23 @@
-CC = i686-elf-gcc
-AS = nasm
-LD = i686-elf-gcc
+ARCH ?= x86_64
 
-ARCH ?= i386
+CC = $(ARCH)-elf-gcc
+AS = nasm
+LD = $(ARCH)-elf-gcc
+
 LOG_LEVEL ?= INFO
 VER ?= 0.1.0
 
-CFLAGS = -ffreestanding -O2 -Wall -Wextra -I./include/ -I../libc/include/ -DLOG_LEVEL_$(LOG_LEVEL) -D__KERNEL_ARCH_=\"$(ARCH)\" -D__OS_VERSION_=\"$(VER)\" -MD -MP
-ASFLAGS = -f elf32
-LDFLAGS = -ffreestanding -O2 -nostdlib -lgcc
+CFLAGS = -ffreestanding -O2 -Wall -Wextra -I./include/ -I../libc/include/ \
+         -DLOG_LEVEL_$(LOG_LEVEL) -D__KERNEL_ARCH_=\"$(ARCH)\" -D__OS_VERSION_=\"$(VER)\" -MD -MP
+
+ifeq ($(ARCH), x86_64)
+    CFLAGS += -mno-red-zone -mcmodel=kernel -mno-mmx -mno-sse -mno-sse2
+    ASFLAGS = -f elf64
+		LDFLAGS = -ffreestanding -O2 -nostdlib -z max-page-size=0x1000
+else
+    ASFLAGS = -f elf32
+    LDFLAGS = -ffreestanding -O2 -nostdlib -lgcc
+endif
 
 SRC_DIRS = arch/$(ARCH) kernel drivers mm shell
 BUILD_DIR = build
@@ -31,10 +40,7 @@ CRTN_OBJ = $(BUILD_DIR)/$(basename $(notdir $(CRTN_SRC))).o
 
 VPATH = $(sort $(dir $(ALL_C_SRCS) $(ALL_NASM_SRCS)))
 
-CRTBEGIN_OBJ := $(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
-CRTEND_OBJ   := $(shell $(CC) $(CFLAGS) -print-file-name=crtend.o)
-
-KERNEL = os.kernel
+KERNEL = mist.kernel
 LIBK = ../libc/libk.a
 
 .PHONY: all clean run
