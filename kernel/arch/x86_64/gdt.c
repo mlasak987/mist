@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "arch/x86_64/gdt.h"
+#include "log.h"
 
 struct gdt_entry
 {
@@ -53,5 +54,5 @@ void gdt_init(void)
   gdt_set_gate(4, 0, 0, 0xFA, 0x20); 
 
   gdt_flush((uint64_t)&gdt_p);
-  printf("[ %caOK%cr ] Mist: x86_64 GDT initialized.\n", 0x1B, 0x1B);
+  log(LOG_OK, "Mist", "x86_64 GDT initialized.");
 }

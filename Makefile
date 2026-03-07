@@ -1,6 +1,6 @@
 export ARCH ?= x86_64
-export LOG_LEVEL ?= INFO
-export VER ?= 0.1.1
+export LOG_LEVEL ?= DEBUG # DEBUG INFO ERROR
+export VER ?= 0.1.2
 
 ISO_NAME = mist-$(VER)-$(ARCH).iso
 

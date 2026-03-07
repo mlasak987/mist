@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "mm/pmm.h"
 #include "arch/limine.h"
+#include "log.h"
 
 __attribute__((used, section(".requests")))
 static volatile struct limine_memmap_request memmap_request = { .id = LIMINE_MEMMAP_REQUEST_ID, .revision = 0 };
@@ -24,7 +25,7 @@ void pmm_init(void)
 
   if (memmap_request.response == NULL)
   {
-    printf("[ %ccPANIC%cr ] Mist: Missing memory map from Limine!\n", 0x1B, 0x1B);
+    log(LOG_PANIC, "Mist", "Missing memory map from Limine!");
     while(1);
   }
 
@@ -50,7 +51,7 @@ void pmm_init(void)
   }
 
   uint64_t mem = (max_blocks * 4) / 1000;
-  printf("[ %caOK%cr ] Mist: PMM initialized. Max blocks: %lu (%luMB)\n", 0x1B, 0x1B, (unsigned long)max_blocks, mem);
+  log(LOG_OK, "Mist", "PMM initialized. Max blocks: %lu (%lu MB)", max_blocks, mem);
 }
 
 void* pmm_alloc_block(void)

@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "arch/x86_64/idt.h"
 #include "drivers/ps2_kbd.h"
+#include "arch/x86_64/pic.h"
+#include "log.h"
 
 struct idt_entry
 {
@@ -29,6 +31,7 @@ extern void isr0(void);
 extern void isr1(void);
 extern void isr2(void);
 extern void isr3(void);
+extern void isr32(void);
 extern void isr33(void);
 
 void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags)
@@ -54,19 +57,28 @@ void idt_init(void)
   idt_set_gate(1, (uint64_t)isr1, 0x08, 0x8E);
   idt_set_gate(2, (uint64_t)isr2, 0x08, 0x8E);
   idt_set_gate(3, (uint64_t)isr3, 0x08, 0x8E);
+  idt_set_gate(32, (uint64_t)isr32, 0x08, 0x8E);
   idt_set_gate(33, (uint64_t)isr33, 0x08, 0x8E);
 
   idt_flush((uint64_t)&idtp);
-  printf("[ %caOK%cr ] Mist: x86_64 IDT initialized.\n", 0x1B, 0x1B);
+  log(LOG_OK, "Mist", "x86_64 IDT initialized.");
 }
 
 void isr_handler(uint64_t int_no, uint64_t err_code)
 {
-  if (int_no == 33) 
+  if (int_no == 32)
+  {
+    //timer_ticks++;
+    pic_send_eoi(0);
+  }
+  else if (int_no == 33) 
   {
     kbd_handler();
-    return;
+    pic_send_eoi(1);
   }
-  printf("[ %ccPANIC%cr ] Unhandled Exception CPU! Number: %ld, Error Code: %ld\n", 0x1B, 0x1B, int_no, err_code);
-  while(1) asm volatile("hlt");
+  else
+  {
+    log(LOG_PANIC, "Mist", "Unhandled Exception CPU! Number: %ld, Error Code: %ld", int_no, err_code);
+    while(1) asm volatile("hlt");
+  }
 }

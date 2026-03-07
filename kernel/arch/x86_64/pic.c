@@ -1,6 +1,7 @@
 #include "arch/x86_64/io.h"
 #include <stdint.h>
 #include <stdio.h>
+#include "log.h"
 
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA    0x21
@@ -42,7 +43,7 @@ void pic_remap(void)
   outb(PIC1_DATA, 0xFD);
   outb(PIC2_DATA, 0xFF);
 
-  printf("[ %caOK%cr ] Mist: Legacy PIC remapped to IDT 0x20\n", 0x1B, 0x1B);
+  log(LOG_OK, "Mist", "Legacy PIC remapped to IDT 0x20");
 }
 
 void pic_send_eoi(uint8_t irq)

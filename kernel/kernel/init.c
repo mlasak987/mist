@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "log.h"
 
 #include "arch/x86_64/gdt.h"
 #include "arch/x86_64/idt.h"
@@ -12,7 +13,7 @@
 
 void init(void)
 {
-  printf("[ %c7INFO%cr ] Mist: Booting Mist on %s...\n", 0x1B, 0x1B, __KERNEL_ARCH_);
+  log(LOG_INFO, "Mist", "Booting Mist on %s...", __KERNEL_ARCH_);
 
   gdt_init();
   idt_init();
@@ -23,9 +24,9 @@ void init(void)
   pmm_init();
   kheap_init();
 
-  printf("[ %c7INFO%cr ] Mist: System initialized.\n", 0x1B, 0x1B);
-  printf("[ %c7INFO%cr ] Mist: Press 'ENTER' to enter the Mist Kernel Shell.\n", 0x1B, 0x1B);
-  
+  log(LOG_INFO, "Mist", "System initialized.");
+  log(LOG_INFO, "Mist", "Press 'ENTER' to enter the Mist Kernel Shell.");
+
   if (kbd_getchar() == '\n')
   {
     kernel_shell_init();

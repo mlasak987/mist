@@ -14,10 +14,37 @@ static size_t terminal_x = 0;
 static size_t terminal_y = 0;
 static uint32_t terminal_color_fg = 0xFFFFFFFF;
 static uint32_t terminal_color_bg = 0x00000000;
-static bool terminal_expect_color_code = false;
+
+static ansi_state_t ansi_state;
+#define MAX_ANSI_ARGS 8
+static int ansi_args[MAX_ANSI_ARGS];
+static int ansi_arg_count = 0;
+static int ansi_current_arg = 0;
 
 #define CHAR_WIDTH 8
 #define CHAR_HEIGHT 8
+
+static const uint32_t ansi_colors[8] = {
+  0xFF000000, // 30: Black
+  0xFFAA0000, // 31: Red
+  0xFF00AA00, // 32: Green
+  0xFFFFAA00, // 33: Yellow (Gold)
+  0xFF0000AA, // 34: Blue
+  0xFFAA00AA, // 35: Magenta
+  0xFF00AAAA, // 36: Cyan
+  0xFFAAAAAA  // 37: Light Gray
+};
+
+static const uint32_t ansi_bright_colors[8] = {
+  0xFF555555, // 90: Dark Gray
+  0xFFFF5555, // 91: Light Red
+  0xFF55FF55, // 92: Light Green
+  0xFFFFFF55, // 93: Light Yellow
+  0xFF5555FF, // 94: Light Blue
+  0xFFFF55FF, // 95: Light Magenta
+  0xFF55FFFF, // 96: Light Cyan
+  0xFFFFFFFF  // 97: White
+};
 
 void terminal_clear()
 {
@@ -62,7 +89,7 @@ void terminal_init(void* framebuffer_address, size_t width, size_t height, size_
 static void terminal_scroll()
 {
   memmove((uint8_t *)fb_addr,
-          (uint8_t *)fb_addr + (CHAR_WIDTH * fb_pitch), 
+          (uint8_t *)fb_addr + (CHAR_HEIGHT * fb_pitch), 
           fb_pitch * (fb_height - CHAR_HEIGHT));
 
   uint32_t *clear = (uint32_t *)((uint8_t *)fb_addr + ((fb_height - CHAR_HEIGHT) * fb_pitch));
@@ -80,52 +107,93 @@ static void terminal_newline()
   }
 }
 
-static void terminal_set_color_by_code(char c)
+static void terminal_apply_ansi()
 {
-  switch (c)
+  bool bold = false;
+
+  if (ansi_arg_count == 0)
   {
-    case '0': terminal_color_fg = 0xFF000000; break; // Black
-    case '1': terminal_color_fg = 0xFF0000AA; break; // Blue
-    case '2': terminal_color_fg = 0xFF00AA00; break; // Green
-    case '3': terminal_color_fg = 0xFF00AAAA; break; // Cyan
-    case '4': terminal_color_fg = 0xFFAA0000; break; // Red
-    case '5': terminal_color_fg = 0xFFAA00AA; break; // Magenta
-    case '6': terminal_color_fg = 0xFFFFAA00; break; // Gold
-    case '7': terminal_color_fg = 0xFFAAAAAA; break; // Light Gray
-    case 'a': terminal_color_fg = 0xFF55FF55; break; // Light Green
-    case 'c': terminal_color_fg = 0xFFFF5555; break; // Light Red
-    case 'e': terminal_color_fg = 0xFFFFFF55; break; // Yellow
-    case 'f': terminal_color_fg = 0xFFFFFFFF; break; // White
-    case 'r': terminal_color_fg = 0xFFFFFFFF; break; // Reset
-    default:  terminal_color_fg = 0xFFFFFFFF; break;
+    ansi_args[0] = 0;
+    ansi_arg_count = 1;
+  }
+
+  for (int i = 0; i < ansi_arg_count; i++)
+  {
+    int code = ansi_args[i];
+
+    if (code == 0)
+    {
+      terminal_color_fg = 0xFFFFFFFF;
+      terminal_color_bg = 0x00000000;
+      bold = false;
+    } 
+    else if (code == 1)
+      bold = true;
+    else if (code >= 30 && code <= 37)
+      terminal_color_fg = bold ? ansi_bright_colors[code - 30] : ansi_colors[code - 30];
+    else if (code >= 40 && code <= 47)
+      terminal_color_bg = ansi_colors[code - 40];
+    else if (code >= 90 && code <= 97)
+      terminal_color_fg = ansi_bright_colors[code - 90];
   }
 }
+
 void terminal_putchar(char c)
 {
-  if (terminal_expect_color_code)
+  switch (ansi_state)
   {
-    terminal_set_color_by_code(c);
-    terminal_expect_color_code = false;
-    return;
-  }
+    case ANSI_STATE_NORMAL:
+      if (c == 0x1B)
+        ansi_state = ANSI_STATE_ESC;
+      else
+      {
+        switch (c)
+        {
+          case '\n':
+            terminal_newline();
+            break;
+          case '\b':
+            if (terminal_x > 0) terminal_x--;
+            terminal_draw_char(' ', terminal_x * CHAR_WIDTH, terminal_y * CHAR_HEIGHT, terminal_color_fg);
+            break;
+          default:
+            terminal_draw_char(c, terminal_x * CHAR_WIDTH, terminal_y * CHAR_HEIGHT, terminal_color_fg);
+            if (++terminal_x * CHAR_WIDTH >= fb_width)
+              terminal_newline();
+        }
+      }
+      break;
 
-  switch (c)
-  {
-    case '\n':
-      terminal_newline();
+    case ANSI_STATE_ESC:
+      if (c == '[')
+      {
+        ansi_state = ANSI_STATE_CSI;
+        ansi_arg_count = 0;
+        ansi_current_arg = 0;
+      }
+      else
+        ansi_state = ANSI_STATE_NORMAL;
       break;
-    case '\b':
-      terminal_x--;
-      terminal_draw_char(' ', terminal_x * CHAR_WIDTH, terminal_y * CHAR_HEIGHT, terminal_color_fg);
-      break;
-    case 0x1B:
-      terminal_expect_color_code = true;
-      break;
-    default:
-      terminal_draw_char(c, terminal_x * CHAR_WIDTH, terminal_y * CHAR_HEIGHT, terminal_color_fg);
-      if (++terminal_x * CHAR_WIDTH >= fb_width)
-        terminal_newline();
 
+    case ANSI_STATE_CSI:
+      if (c >= '0' && c <= '9')
+        ansi_current_arg = ansi_current_arg * 10 + (c - '0');
+      else if (c == ';')
+      {
+        if (ansi_arg_count < MAX_ANSI_ARGS)
+          ansi_args[ansi_arg_count++] = ansi_current_arg;
+        ansi_current_arg = 0;
+      }
+      else if (c == 'm')
+      {
+        if (ansi_arg_count < MAX_ANSI_ARGS)
+          ansi_args[ansi_arg_count++] = ansi_current_arg;
+        terminal_apply_ansi();
+        ansi_state = ANSI_STATE_NORMAL;
+      }
+      else
+        ansi_state = ANSI_STATE_NORMAL;
+      break;
   }
 }
 

@@ -2,6 +2,7 @@
 #include "mm/pmm.h"
 #include <stdio.h>
 #include <stdint.h>
+#include "log.h"
 
 static heap_block_t* heap_head = NULL;
 
@@ -17,7 +18,7 @@ void kheap_init(void)
   heap_head->is_free = 1;
   heap_head->next = NULL;
 
-  printf("[ %caOK%cr ] Mist: Kernel heap initialized on address %p (256 KB)\n", 0x1B, 0x1B, (void*)heap_head);
+  log(LOG_OK, "Mist", "Kernel heap initialized on address %p (256 KB)", (void *)heap_head);
 }
 
 void* kmalloc(size_t size)
@@ -48,7 +49,7 @@ void* kmalloc(size_t size)
     current = current->next;
   }
 
-  printf("[ %ccPANIC%cr ] Mist: Kernel heap is out of memory!\n", 0x1B, 0x1B);
+  log(LOG_PANIC, "Mist", "Kernel heap is out of memory!");
   return NULL;
 }
 

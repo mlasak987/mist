@@ -42,6 +42,7 @@ ISR_NOERRCODE 0 ; Zero division
 ISR_NOERRCODE 1 ; Debug
 ISR_NOERRCODE 2 ; NMI
 ISR_NOERRCODE 3 ; Breakpoint
+ISR_NOERRCODE 32 ; PIT
 ISR_NOERRCODE 33 ; Keyboard
 
 isr_common_stub:
