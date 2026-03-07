@@ -6,7 +6,7 @@
 
 typedef struct heap_block {
     size_t size;
-    uint8_t is_free;
+    uint32_t is_free;
     struct heap_block* next;
 } heap_block_t;
 

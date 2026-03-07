@@ -1,87 +1,74 @@
 #include <string.h>
 #include <stdio.h>
-
 #include "mm/pmm.h"
+#include "arch/limine.h"
 
-// 131072 bytes * 8 bits = 1 048 576 blocks (4 KB) = 4 GB physical memory
+__attribute__((used, section(".requests")))
+static volatile struct limine_memmap_request memmap_request = { .id = LIMINE_MEMMAP_REQUEST_ID, .revision = 0 };
+
+__attribute__((used, section(".requests")))
+static volatile struct limine_hhdm_request hhdm_request = { .id = LIMINE_HHDM_REQUEST_ID, .revision = 0 };
+
 #define BITMAP_SIZE 131072
-
 static uint8_t pmm_bitmap[BITMAP_SIZE];
 static uintptr_t max_blocks = 0;
+static uintptr_t hhdm_offset = 0;
 
-extern uintptr_t _end;
+static inline void bitmap_set(uintptr_t bit) { pmm_bitmap[bit / 8] |= (1 << (bit % 8)); }
+static inline void bitmap_clear(uintptr_t bit) { pmm_bitmap[bit / 8] &= ~(1 << (bit % 8)); }
+static inline int bitmap_test(uintptr_t bit) { return pmm_bitmap[bit / 8] & (1 << (bit % 8)); }
 
-static inline void bitmap_set(uintptr_t bit)
-{
-  pmm_bitmap[bit / 8] |= (1 << (bit % 8));
-}
-
-static inline void bitmap_clear(uintptr_t bit)
-{
-  pmm_bitmap[bit / 8] &= ~(1 << (bit % 8));
-}
-
-static inline int bitmap_test(uintptr_t bit)
-{
-  return pmm_bitmap[bit / 8] & (1 << (bit % 8));
-}
-
-void pmm_init(multiboot_info_t* mbd)
+void pmm_init(void)
 {
   memset(pmm_bitmap, 0xFF, BITMAP_SIZE);
 
-  if (!(mbd->flags & (1 << 6)))
+  if (memmap_request.response == NULL)
   {
-    printf("[ ERROR ] Mist: Missing memory map from bootloader!\n");
-    return;
+    printf("[ %ccPANIC%cr ] Mist: Missing memory map from Limine!\n", 0x1B, 0x1B);
+    while(1);
   }
 
-  multiboot_memory_map_t* mmap = (multiboot_memory_map_t*)(uintptr_t)mbd->mmap_addr;
-  uintptr_t mmap_end = mbd->mmap_addr + mbd->mmap_length;
+  if (hhdm_request.response != NULL)
+    hhdm_offset = hhdm_request.response->offset;
 
-  while ((uintptr_t)mmap < mmap_end)
+  struct limine_memmap_response *mmap = memmap_request.response;
+
+  for (uint64_t idx = 0; idx < mmap->entry_count; idx++)
   {
-    if (mmap->type == 1) // 1 => memory available
+    struct limine_memmap_entry *entry = mmap->entries[idx];
+    if (entry->type == LIMINE_MEMMAP_USABLE)
     {
-      uintptr_t start_addr = mmap->base_addr_low;
-      uintptr_t length = mmap->length_low;
+      uintptr_t start_block = entry->base / PMM_BLOCK_SIZE;
+      uintptr_t blocks = entry->length / PMM_BLOCK_SIZE;
 
-      uintptr_t start_block = start_addr / PMM_BLOCK_SIZE;
-      uintptr_t blocks = length / PMM_BLOCK_SIZE;
+      for (uintptr_t j = 0; j < blocks; j++)
+        bitmap_clear(start_block + j);
 
-      for (uintptr_t i = 0; i < blocks; i++)
-        bitmap_clear(start_block + i);
-
-      uintptr_t end_block = start_block + blocks;
-      if (end_block > max_blocks)
-        max_blocks = end_block;
+      if (start_block + blocks > max_blocks)
+        max_blocks = start_block + blocks;
     }
-    mmap = (multiboot_memory_map_t *) ((uintptr_t)mmap + mmap->size + sizeof(mmap->size));
   }
 
-  uintptr_t kernel_end_addr = (uintptr_t)&_end;
-  uintptr_t kernel_blocks = (kernel_end_addr / PMM_BLOCK_SIZE) + 1;
-
-  for (uintptr_t i = 0; i < kernel_blocks; i++)
-    bitmap_set(i);
-
-  printf("[ INFO ] Mist: PMM initialized. Max blocks: %d (4KB)\n", max_blocks);
+  uint64_t mem = (max_blocks * 4) / 1000;
+  printf("[ %caOK%cr ] Mist: PMM initialized. Max blocks: %lu (%luMB)\n", 0x1B, 0x1B, (unsigned long)max_blocks, mem);
 }
 
 void* pmm_alloc_block(void)
 {
-  for (uintptr_t i = 0; i < max_blocks; i++)
-    if (!bitmap_test(i))
+  for (uintptr_t idx = 0; idx < max_blocks; idx++)
+  {
+    if (!bitmap_test(idx))
     {
-      bitmap_set(i);
-      return (void*)(uintptr_t)(i * PMM_BLOCK_SIZE);
+      bitmap_set(idx);
+      return (void*)(uintptr_t)(idx * PMM_BLOCK_SIZE + hhdm_offset);
     }
+  }
   return NULL;
 }
 
 void pmm_free_block(void* ptr)
 {
-  uintptr_t addr = (uintptr_t)ptr;
+  uintptr_t addr = (uintptr_t)ptr - hhdm_offset;
   uintptr_t block = addr / PMM_BLOCK_SIZE;
   bitmap_clear(block);
 }

@@ -41,7 +41,7 @@ iso: kernel limine
 	@rm -rf isodir
 
 run-iso: iso
-	qemu-system-$(ARCH) -M q35 -m 2G -cdrom $(ISO_NAME) -boot d -no-reboot -no-shutdown -d int
+	qemu-system-$(ARCH) -M q35 -m 2G -cdrom $(ISO_NAME) -boot d
 
 clean:
 	$(MAKE) -C libc clean

@@ -10,7 +10,7 @@
 
 void kernel_shell_init()
 {
-  //terminal_init();
+  terminal_clear();
   printf(" __  __ _     _   \n"
                  "|  \\/  (_)___| |_ \n"
                  "| |\\/| | / __| __|\n"
@@ -53,8 +53,8 @@ static void execute_command(char* input)
   {
     if (!strcmp(argv[0], "help"))
       printf("Available commands: help, clear, echo\n");
-    //else if (!strcmp(argv[0], "clear"))
-      //terminal_init();
+    else if (!strcmp(argv[0], "clear"))
+      terminal_clear();
     else if (!strcmp(argv[0], "echo"))
     {
       for (int i = 1; i < argc; i++)

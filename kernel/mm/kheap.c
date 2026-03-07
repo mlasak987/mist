@@ -17,13 +17,13 @@ void kheap_init(void)
   heap_head->is_free = 1;
   heap_head->next = NULL;
 
-  printf("[ INFO ] Mist: Kernel heap initialized on address 0x%lx (256 KB)\n", (uintptr_t)heap_head);
+  printf("[ %caOK%cr ] Mist: Kernel heap initialized on address %p (256 KB)\n", 0x1B, 0x1B, (void*)heap_head);
 }
 
 void* kmalloc(size_t size)
 {
   if (size == 0) return NULL;
-  size = (size + 3) & ~3;
+  size = (size + 15) & ~15;
 
   heap_block_t* current = heap_head;
 
@@ -31,7 +31,7 @@ void* kmalloc(size_t size)
   {
     if (current->is_free && current->size >= size)
     {
-      if (current->size >= size + sizeof(heap_block_t) + 4)
+      if (current->size >= size + sizeof(heap_block_t) + 16)
       {
         heap_block_t* new_block = (heap_block_t*)((uint8_t*)current + sizeof(heap_block_t) + size);
         new_block->size = current->size - size - sizeof(heap_block_t);
@@ -48,7 +48,7 @@ void* kmalloc(size_t size)
     current = current->next;
   }
 
-  printf("[ ERROR ] Mist: Kernel heap is out of memory!\n");
+  printf("[ %ccPANIC%cr ] Mist: Kernel heap is out of memory!\n", 0x1B, 0x1B);
   return NULL;
 }
 
