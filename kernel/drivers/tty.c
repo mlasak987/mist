@@ -1,104 +1,136 @@
-#include <stddef.h>
-#include <string.h>
-
 #include "drivers/tty.h"
-#include "drivers/vga.h"
-#include "arch/i386/io.h"
+#include "drivers/font.h"
+#include <string.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
 
-static size_t terminal_row;
-static size_t terminal_column;
-static uint8_t terminal_color;
-static uint16_t* terminal_buffer;
+static uint32_t* fb_addr;
+static size_t fb_width;
+static size_t fb_height;
+static size_t fb_pitch;
+
+static size_t terminal_x = 0;
+static size_t terminal_y = 0;
+static uint32_t terminal_color_fg = 0xFFFFFFFF;
+static uint32_t terminal_color_bg = 0x00000000;
+static bool terminal_expect_color_code = false;
+
+#define CHAR_WIDTH 8
+#define CHAR_HEIGHT 8
+
+void terminal_clear()
+{
+  for (size_t y = 0; y < fb_height; y++)
+    for (size_t x = 0; x < fb_width; x++)
+    {
+      uint32_t* pixel = (uint32_t*)((uint8_t*)fb_addr + (y * fb_pitch) + (x * 4));
+      *pixel = terminal_color_bg;
+    }
+
+  terminal_x = 0;
+  terminal_y = 0;
+}
+
+static void terminal_draw_char(char c, size_t x, size_t y, uint32_t color)
+{
+  if (c < 32 || c >= 127) c = '?';
+  const uint8_t* glyph = font8x8_basic[(uint8_t)c];
+
+  for (size_t cy = 0; cy < CHAR_HEIGHT; cy++)
+    for (size_t cx = 0; cx < CHAR_WIDTH; cx++)
+    {
+      uint32_t g_color = (glyph[cy] & (0x80 >> cx)) ? color : terminal_color_bg;
+      uint32_t* pixel = (uint32_t*)((uint8_t*)fb_addr + ((y + cy) * fb_pitch) + ((x + cx) * 4));
+      *pixel = g_color;
+    }
+}
+
+void terminal_init(void* framebuffer_address, size_t width, size_t height, size_t pitch)
+{
+  fb_addr = (uint32_t*)framebuffer_address;
+  fb_width = width;
+  fb_height = height;
+  fb_pitch = pitch;
+
+  terminal_y = 0;
+  terminal_x = 0;
+  
+  terminal_clear();
+}
 
 static void terminal_scroll()
 {
-  uint16_t empty = vga_entry(' ', terminal_color);
-  memmove(terminal_buffer,
-          terminal_buffer + VGA_WIDTH,
-          VGA_WIDTH * (VGA_HEIGHT - 1) * sizeof(uint16_t));
-  memsetw(terminal_buffer + VGA_WIDTH * (VGA_HEIGHT - 1),
-          empty,
-          VGA_WIDTH);
-}
+  memmove((uint8_t *)fb_addr,
+          (uint8_t *)fb_addr + (CHAR_WIDTH * fb_pitch), 
+          fb_pitch * (fb_height - CHAR_HEIGHT));
 
-static void terminal_backspace()
-{
-  if (terminal_column > 0)
-  {
-    terminal_column--;
-    terminal_putchar(' ');
-    terminal_column--;
-  }
+  uint32_t *clear = (uint32_t *)((uint8_t *)fb_addr + ((fb_height - CHAR_HEIGHT) * fb_pitch));
+  for (size_t idx = 0; idx < (fb_pitch * CHAR_HEIGHT) / 4; idx++)
+    clear[idx] = terminal_color_bg;
 }
 
 static void terminal_newline()
 {
-  terminal_column = 0;
-  if (++terminal_row == VGA_HEIGHT)
+  terminal_x = 0;
+  if (++terminal_y * CHAR_HEIGHT >= fb_height)
   {
     terminal_scroll();
-    terminal_row--;
+    terminal_y--;
   }
 }
 
-static void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
+static void terminal_set_color_by_code(char c)
 {
-    outb(0x3D4, 0x0A);
-    outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
- 
-    outb(0x3D4, 0x0B);
-    outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+  switch (c)
+  {
+    case '0': terminal_color_fg = 0xFF000000; break; // Black
+    case '1': terminal_color_fg = 0xFF0000AA; break; // Blue
+    case '2': terminal_color_fg = 0xFF00AA00; break; // Green
+    case '3': terminal_color_fg = 0xFF00AAAA; break; // Cyan
+    case '4': terminal_color_fg = 0xFFAA0000; break; // Red
+    case '5': terminal_color_fg = 0xFFAA00AA; break; // Magenta
+    case '6': terminal_color_fg = 0xFFFFAA00; break; // Gold
+    case '7': terminal_color_fg = 0xFFAAAAAA; break; // Light Gray
+    case 'a': terminal_color_fg = 0xFF55FF55; break; // Light Green
+    case 'c': terminal_color_fg = 0xFFFF5555; break; // Light Red
+    case 'e': terminal_color_fg = 0xFFFFFF55; break; // Yellow
+    case 'f': terminal_color_fg = 0xFFFFFFFF; break; // White
+    case 'r': terminal_color_fg = 0xFFFFFFFF; break; // Reset
+    default:  terminal_color_fg = 0xFFFFFFFF; break;
+  }
 }
-
-static void terminal_update_cursor(void)
-{
-    uint16_t pos = terminal_row * VGA_WIDTH + terminal_column;
- 
-    outb(0x3D4, 0x0F);
-    outb(0x3D5, (uint8_t) (pos & 0xFF));
-    outb(0x3D4, 0x0E);
-    outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
-}
-
-void terminal_init(void)
-{
-  terminal_row = 0;
-  terminal_column = 0;
-  terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-  terminal_buffer = VGA_MEMORY;
-
-  uint16_t empty = vga_entry(' ', terminal_color);
-  memsetw(terminal_buffer, empty, VGA_WIDTH * VGA_HEIGHT);
-  terminal_enable_cursor(14, 15);
-}
-
 void terminal_putchar(char c)
 {
-  unsigned char uc = (unsigned)c;
-
-  if (uc == '\n')
-    terminal_newline();
-  else if (uc == '\b')
-    terminal_backspace();
-  else
+  if (terminal_expect_color_code)
   {
-    const size_t idx = terminal_row * VGA_WIDTH + terminal_column;
-    terminal_buffer[idx] = vga_entry(uc, terminal_color);
-    if (++terminal_column == VGA_WIDTH)
-      terminal_newline();
+    terminal_set_color_by_code(c);
+    terminal_expect_color_code = false;
+    return;
   }
 
-  terminal_update_cursor();
+  switch (c)
+  {
+    case '\n':
+      terminal_newline();
+      break;
+    case '\b':
+      terminal_x--;
+      terminal_draw_char(' ', terminal_x * CHAR_WIDTH, terminal_y * CHAR_HEIGHT, terminal_color_fg);
+      break;
+    case 0x1B:
+      terminal_expect_color_code = true;
+      break;
+    default:
+      terminal_draw_char(c, terminal_x * CHAR_WIDTH, terminal_y * CHAR_HEIGHT, terminal_color_fg);
+      if (++terminal_x * CHAR_WIDTH >= fb_width)
+        terminal_newline();
+
+  }
 }
 
-void terminal_write(const char *data, size_t size)
+void terminal_write(const char* data, size_t size)
 {
   for (size_t idx = 0; idx < size; idx++)
     terminal_putchar(data[idx]);
-}
-
-void terminal_writestr(const char *data)
-{
-  size_t len = strlen(data);
-  terminal_write(data, len);
 }

@@ -33,6 +33,13 @@ int printf(const char *restrict format, ...)
     format++; // Skip %
     if (*format == '\0') break;
 
+    bool is_long = false;
+    if (*format == 'l')
+    {
+      is_long = true;
+      format++;
+    }
+
     switch (*format)
     {
       case '%':
@@ -60,29 +67,51 @@ int printf(const char *restrict format, ...)
       case 'd':
       case 'i':
         {
-          int num = va_arg(parameters, int);
-          char buffer[32];
+          int64_t num = is_long ? va_arg(parameters, int64_t) : va_arg(parameters, int);
+          char buffer[64];
           itoa(num, buffer, 10);
           size_t len = strlen(buffer);
           print (buffer, len);
           written += len;
           break;
         }
+      case 'u':
+        {
+          uint64_t num = is_long ? va_arg(parameters, uint64_t) : va_arg(parameters, unsigned int);
+          char buffer[64];
+          utoa(num, buffer, 10);
+          size_t len = strlen(buffer);
+          print(buffer, len);
+          written += len;
+          break;
+        }
       case 'x':
         {
-          unsigned int num = va_arg(parameters, unsigned int);
-          char buffer[32];
+          uint64_t num = is_long ? va_arg(parameters, uint64_t) : va_arg(parameters, unsigned int);
+          char buffer[64];
           utoa(num, buffer, 16);
           size_t len = strlen(buffer);
           print(buffer, len);
           written += len;
           break;
         }
+      case 'p':
+        {
+          uintptr_t ptr = va_arg(parameters, uintptr_t);
+          print("0x", 2);
+          char buffer[64];
+          utoa(ptr, buffer, 16);
+          size_t len = strlen(buffer);
+          print(buffer, len);
+          written += len + 2;
+          break;
+        }
       default:
         {
           putchar('%');
+          if (is_long) putchar('l');
           putchar(*format);
-          written += 2;
+          written += (is_long ? 3 : 2);
           break;
         }
     }

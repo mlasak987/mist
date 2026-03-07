@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include <stdint.h>
 
 static void reverse(char *str, int len) {
   int start = 0, end = len - 1;
@@ -11,15 +12,15 @@ static void reverse(char *str, int len) {
   }
 }
 
-char *utoa(unsigned int value, char *str, int base) {
+char *utoa(uint64_t value, char *str, int base) {
   int idx = 0;
   if (!value) {
-    str[idx++] = 0;
+    str[idx++] = '0';
     str[idx] = '\0';
     return str;
   }
   while (value) {
-    int rem = value % base;
+    uint64_t rem = value % base;
     str[idx++] = rem > 9 ? 'a' + (rem - 10) : '0' + rem;
     value /= base;
   }

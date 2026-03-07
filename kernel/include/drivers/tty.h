@@ -1,11 +1,12 @@
-#ifndef _KERNEL_TTY_H
-#define _KERNEL_TTY_H
+#ifndef _TTY_H
+#define _TTY_H
 
 #include <stddef.h>
+#include <stdint.h>
 
-void terminal_init(void);
+void terminal_init(void* framebuffer_address, size_t width, size_t height, size_t pitch);
 void terminal_putchar(char c);
 void terminal_write(const char* data, size_t size);
-void terminal_writestr(const char* data);
+void terminal_clear();
 
 #endif

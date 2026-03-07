@@ -7,8 +7,10 @@
 extern "C" {
 #endif
 
-char *utoa(unsigned int value, char *str, int base);
-char *itoa(int value, char *str, int base);
+#include <stdint.h>
+
+char *utoa(uint64_t value, char *str, int base);
+char *itoa(int64_t value, char *str, int base);
 
 int putchar(int ic);
 int printf(const char * restrict format, ...);
