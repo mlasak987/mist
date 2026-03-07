@@ -5,7 +5,7 @@ AS = nasm
 LD = $(ARCH)-elf-gcc
 
 LOG_LEVEL ?= INFO
-VER ?= 0.1.1
+VER ?= 0.1.0
 
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -I./include/ -I../libc/include/ \
          -DLOG_LEVEL_$(LOG_LEVEL) -D__KERNEL_ARCH_=\"$(ARCH)\" -D__OS_VERSION_=\"$(VER)\" -MD -MP
