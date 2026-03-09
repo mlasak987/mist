@@ -1,7 +1,10 @@
 #include <string.h>
 #include <stdio.h>
-#include "mm/pmm.h"
+#include <types.h>
+
 #include "arch/limine.h"
+#include "mm/pmm.h"
+
 #include "log.h"
 
 __attribute__((used, section(".requests")))
@@ -34,7 +37,7 @@ void pmm_init(void)
 
   struct limine_memmap_response *mmap = memmap_request.response;
 
-  for (uint64_t idx = 0; idx < mmap->entry_count; idx++)
+  for (uintn_t idx = 0; idx < mmap->entry_count; idx++)
   {
     struct limine_memmap_entry *entry = mmap->entries[idx];
     if (entry->type == LIMINE_MEMMAP_USABLE)
@@ -50,7 +53,7 @@ void pmm_init(void)
     }
   }
 
-  uint64_t mem = (max_blocks * 4) / 1000;
+  uintn_t mem = (max_blocks * 4) / 1000;
   log(LOG_OK, "Mist", "PMM initialized. Max blocks: %lu (%lu MB)", max_blocks, mem);
 }
 

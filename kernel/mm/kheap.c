@@ -1,10 +1,19 @@
-#include "mm/kheap.h"
-#include "mm/pmm.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <types.h>
+
+#include "mm/kheap.h"
+#include "mm/pmm.h"
+
 #include "log.h"
 
 static heap_block_t* heap_head = NULL;
+
+#if defined __32b__
+  static int all = 4;
+#elif defined __64b__
+  static int all = 16;
+#endif
 
 void kheap_init(void)
 {
@@ -24,7 +33,7 @@ void kheap_init(void)
 void* kmalloc(size_t size)
 {
   if (size == 0) return NULL;
-  size = (size + 15) & ~15;
+  size = (size + (all - 1)) & ~(all - 1);
 
   heap_block_t* current = heap_head;
 
@@ -32,7 +41,7 @@ void* kmalloc(size_t size)
   {
     if (current->is_free && current->size >= size)
     {
-      if (current->size >= size + sizeof(heap_block_t) + 16)
+      if (current->size >= size + sizeof(heap_block_t) + all)
       {
         heap_block_t* new_block = (heap_block_t*)((uint8_t*)current + sizeof(heap_block_t) + size);
         new_block->size = current->size - size - sizeof(heap_block_t);

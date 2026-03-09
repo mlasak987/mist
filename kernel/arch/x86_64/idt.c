@@ -1,12 +1,14 @@
 #include <stdint.h>
 #include <stdio.h>
-#include "arch/x86_64/idt.h"
-#include "drivers/ps2_kbd.h"
-#include "arch/x86_64/pic.h"
-#include "log.h"
-#include "arch/x86_64/pit.h"
 
-struct idt_entry
+#include "arch/idt.h"
+#include "arch/pic.h"
+#include "arch/pit.h"
+#include "drivers/ps2_kbd.h"
+
+#include "log.h"
+
+typedef struct idt_entry_struct
 {
   uint16_t base_low;
   uint16_t sel;
@@ -15,16 +17,16 @@ struct idt_entry
   uint16_t base_mid;
   uint32_t base_high;
   uint32_t always0;
-} __attribute__((packed));
+} __attribute__((packed)) idt_entry_t;
 
-struct idt_ptr
+typedef struct idt_ptr_struct
 {
   uint16_t limit;
   uint64_t base;
-} __attribute__((packed));
+} __attribute__((packed)) idt_ptr_t;
 
-struct idt_entry idt[256];
-struct idt_ptr idtp;
+idt_entry_t idt[256];
+idt_ptr_t idtp;
 
 extern void idt_flush(uint64_t);
 
@@ -48,7 +50,7 @@ void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags)
 
 void idt_init(void)
 {
-  idtp.limit = (sizeof(struct idt_entry) * 256) - 1;
+  idtp.limit = (sizeof(idt_entry_t) * 256) - 1;
   idtp.base = (uint64_t)&idt;
 
   for (int i = 0; i < 256; i++)
@@ -60,6 +62,9 @@ void idt_init(void)
   idt_set_gate(3, (uint64_t)isr3, 0x08, 0x8E);
   idt_set_gate(32, (uint64_t)isr32, 0x08, 0x8E);
   idt_set_gate(33, (uint64_t)isr33, 0x08, 0x8E);
+  
+  pic_remap();
+  asm volatile ("sti");
 
   idt_flush((uint64_t)&idtp);
   log(LOG_OK, "Mist", "x86_64 IDT initialized.");
@@ -69,7 +74,7 @@ void isr_handler(uint64_t int_no, uint64_t err_code)
 {
   if (int_no == 32)
   {
-    timer_ticks++;
+    inc_ticks();
     pic_send_eoi(0);
   }
   else if (int_no == 33) 

@@ -32,13 +32,20 @@ iso: kernel limine
 	@cp limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin isodir/boot/limine/
 	@cp limine/BOOTX64.EFI isodir/EFI/BOOT/
 	@cp limine/BOOTIA32.EFI isodir/EFI/BOOT/
+	@mkdir -p initramfs_root
+	@echo "Hello, World!" > initramfs_root/hello.txt
+	@echo "Some file in RAM:)" > initramfs_root/system.txt
+	@echo "Hidden file." > initramfs_root/.ignore
+	@cd initramfs_root && tar -cvf ../isodir/boot/initramfs.tar $$(ls -A)
 	@xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
-		-no-emul-boot -boot-load-size 4 -boot-info-table \
-		--efi-boot boot/limine/limine-uefi-cd.bin \
-		-efi-boot-part --efi-boot-image --protective-msdos-label \
-		isodir -o $(ISO_NAME)
+	-no-emul-boot -boot-load-size 4 -boot-info-table \
+	--efi-boot boot/limine/limine-uefi-cd.bin \
+	-efi-boot-part --efi-boot-image --protective-msdos-label \
+	isodir -o $(ISO_NAME)
 	@./limine/limine bios-install $(ISO_NAME)
+
 	@rm -rf isodir
+	@rm -rf initramfs_root
 
 run-iso: iso
 	qemu-system-$(ARCH) -M q35 -m 2G -cdrom $(ISO_NAME) -boot d

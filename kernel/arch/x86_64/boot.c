@@ -1,6 +1,8 @@
-#include <arch/limine.h>
 #include <string.h>
+
+#include <arch/limine.h>
 #include "drivers/tty.h"
+
 #include "kernel/main.h"
 #include "kernel/init.h"
 

@@ -1,6 +1,8 @@
-#include "arch/x86_64/io.h"
 #include <stdint.h>
 #include <stdio.h>
+
+#include "arch/io.h"
+
 #include "log.h"
 
 #define PIC1_COMMAND 0x20

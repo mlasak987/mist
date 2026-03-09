@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include "log.h"
 
-#include "arch/x86_64/gdt.h"
-#include "arch/x86_64/idt.h"
-#include "arch/x86_64/pic.h"
-#include "arch/x86_64/pit.h"
+#include "arch/gdt.h"
+#include "arch/idt.h"
+#include "arch/pic.h"
+#include "arch/pit.h"
 
 #include "drivers/tty.h"
 #include "drivers/ps2_kbd.h"
 #include "mm/pmm.h"
 #include "mm/kheap.h"
 #include "shell/shell.h"
+#include "fs/initramfs.h"
 
 void init(void)
 {
@@ -20,13 +21,11 @@ void init(void)
   gdt_init();
   idt_init();
 
-  pic_remap();
-  asm volatile ("sti");
-
   pit_init(1000);
 
   pmm_init();
   kheap_init();
+  initramfs_init();
 
   log(LOG_INFO, "Mist", "System initialized.");
   log(LOG_INFO, "Mist", "Press 'ENTER' to enter the Mist Kernel Shell.");

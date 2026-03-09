@@ -1,9 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
-#include "arch/x86_64/gdt.h"
+
+#include "arch/gdt.h"
+
 #include "log.h"
 
-struct gdt_entry
+typedef struct gdt_entry_struct
 {
   uint16_t limit_low;
   uint16_t base_low;
@@ -11,16 +13,16 @@ struct gdt_entry
   uint8_t  access;
   uint8_t  granularity;
   uint8_t  base_high;
-} __attribute__((packed));
+} __attribute__((packed)) gdt_entry_t;
 
-struct gdt_ptr
+typedef struct gdt_ptr_struct
 {
   uint16_t limit;
   uint64_t base;
-} __attribute__((packed));
+} __attribute__((packed)) gdt_ptr_t;
 
-struct gdt_entry gdt[5];
-struct gdt_ptr gdt_p;
+gdt_entry_t gdt[5];
+gdt_ptr_t gdt_p;
 
 extern void gdt_flush(uint64_t);
 
@@ -38,7 +40,7 @@ static void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access,
 
 void gdt_init(void)
 {
-  gdt_p.limit = (sizeof(struct gdt_entry) * 5) - 1;
+  gdt_p.limit = (sizeof(gdt_entry_t) * 5) - 1;
   gdt_p.base = (uint64_t)&gdt;
 
   // 0: Null descriptor

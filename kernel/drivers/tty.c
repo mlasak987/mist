@@ -86,6 +86,12 @@ void terminal_init(void* framebuffer_address, size_t width, size_t height, size_
   terminal_clear();
 }
 
+void terminal_draw_cursor(bool visible)
+{
+  char cursor_char = visible ? '_' : ' ';
+  terminal_draw_char(cursor_char, terminal_x * CHAR_WIDTH, terminal_y * CHAR_HEIGHT, terminal_color_fg);
+}
+
 static void terminal_scroll()
 {
   memmove((uint8_t *)fb_addr,
