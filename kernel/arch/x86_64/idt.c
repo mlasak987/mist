@@ -4,6 +4,7 @@
 #include "drivers/ps2_kbd.h"
 #include "arch/x86_64/pic.h"
 #include "log.h"
+#include "arch/x86_64/pit.h"
 
 struct idt_entry
 {
@@ -68,7 +69,7 @@ void isr_handler(uint64_t int_no, uint64_t err_code)
 {
   if (int_no == 32)
   {
-    //timer_ticks++;
+    timer_ticks++;
     pic_send_eoi(0);
   }
   else if (int_no == 33) 

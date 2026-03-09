@@ -6,6 +6,8 @@
 #include "drivers/ps2_kbd.h"
 #include "mm/kheap.h"
 
+#include "log.h"
+
 #define MAX_ARGS 16
 
 void kernel_shell_init()
@@ -27,7 +29,7 @@ static void execute_command(char* input)
   char** argv = (char**)kmalloc(MAX_ARGS * sizeof(char*));
   if (!argv)
   {
-    printf("[ ERROR ] MKS: Out of memory during command parsing!\n");
+    log(LOG_ERROR, "MKS", "Out of memory during command parsing!");
     return;
   }
 
@@ -73,7 +75,7 @@ void kernel_shell_loop()
   char* command_buffer = (char*)kmalloc(256);
   if (!command_buffer)
   {
-    printf("[ ERROR ] MKS: Failed to allocate command buffer.\n");
+    log (LOG_PANIC, "MKS", "Failed to allocate command buffer.");
     while(1);
   }
 

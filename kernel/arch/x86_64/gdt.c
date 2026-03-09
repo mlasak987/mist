@@ -43,7 +43,6 @@ void gdt_init(void)
 
   // 0: Null descriptor
   gdt_set_gate(0, 0, 0, 0, 0);
-  
   // 1: Kernel Code Segment
   gdt_set_gate(1, 0, 0, 0x9A, 0x20); 
   // 2: Kernel Data Segment

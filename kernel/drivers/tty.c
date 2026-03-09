@@ -25,14 +25,14 @@ static int ansi_current_arg = 0;
 #define CHAR_HEIGHT 8
 
 static const uint32_t ansi_colors[8] = {
-  0xFF000000, // 30: Black
-  0xFFAA0000, // 31: Red
-  0xFF00AA00, // 32: Green
-  0xFFFFAA00, // 33: Yellow (Gold)
-  0xFF0000AA, // 34: Blue
-  0xFFAA00AA, // 35: Magenta
-  0xFF00AAAA, // 36: Cyan
-  0xFFAAAAAA  // 37: Light Gray
+  0xFF000000, // 30 (40): Black
+  0xFFAA0000, // 31 (41): Red
+  0xFF00AA00, // 32 (42): Green
+  0xFFFFAA00, // 33 (43): Yellow (Gold)
+  0xFF0000AA, // 34 (44): Blue
+  0xFFAA00AA, // 35 (45): Magenta
+  0xFF00AAAA, // 36 (46): Cyan
+  0xFFAAAAAA  // 37 (47): Light Gray
 };
 
 static const uint32_t ansi_bright_colors[8] = {
@@ -67,8 +67,8 @@ static void terminal_draw_char(char c, size_t x, size_t y, uint32_t color)
   for (size_t cy = 0; cy < CHAR_HEIGHT; cy++)
     for (size_t cx = 0; cx < CHAR_WIDTH; cx++)
     {
-      uint32_t g_color = (glyph[cy] & (0x80 >> cx)) ? color : terminal_color_bg;
       uint32_t* pixel = (uint32_t*)((uint8_t*)fb_addr + ((y + cy) * fb_pitch) + ((x + cx) * 4));
+      uint32_t g_color = (glyph[cy] & (0x80 >> cx)) ? color : terminal_color_bg;
       *pixel = g_color;
     }
 }

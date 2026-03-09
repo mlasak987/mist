@@ -4,6 +4,7 @@
 #include "arch/x86_64/gdt.h"
 #include "arch/x86_64/idt.h"
 #include "arch/x86_64/pic.h"
+#include "arch/x86_64/pit.h"
 
 #include "drivers/tty.h"
 #include "drivers/ps2_kbd.h"
@@ -14,12 +15,15 @@
 void init(void)
 {
   log(LOG_INFO, "Mist", "Booting Mist on %s...", __KERNEL_ARCH_);
+  log(LOG_DEBUG, "Init", "Debug is on.");
 
   gdt_init();
   idt_init();
 
   pic_remap();
   asm volatile ("sti");
+
+  pit_init(1000);
 
   pmm_init();
   kheap_init();

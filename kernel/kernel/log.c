@@ -1,9 +1,14 @@
 #include "log.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include "arch/x86_64/pit.h"
 
 void log(log_level_t level, const char *component, const char *format, ...)
 {
+  uint64_t sec = timer_ticks / 1000;
+  uint64_t ms = timer_ticks % 1000;
+  printf("\x1b[90m[%5lu.%03lu]\x1b[0m ", sec, ms);
+
   switch (level)
   {
     #if defined (LOG_LEVEL_DEBUG)
