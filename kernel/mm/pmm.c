@@ -13,8 +13,8 @@ static volatile struct limine_memmap_request memmap_request = { .id = LIMINE_MEM
 __attribute__((used, section(".requests")))
 static volatile struct limine_hhdm_request hhdm_request = { .id = LIMINE_HHDM_REQUEST_ID, .revision = 0 };
 
-#define BITMAP_SIZE 131072
-static uint8_t pmm_bitmap[BITMAP_SIZE];
+static uint8_t *pmm_bitmap = NULL;
+static uintptr_t bitmap_size = 0;
 static uintptr_t max_blocks = 0;
 static uintptr_t hhdm_offset = 0;
 
@@ -24,8 +24,6 @@ static inline int bitmap_test(uintptr_t bit) { return pmm_bitmap[bit / 8] & (1 <
 
 void pmm_init(void)
 {
-  memset(pmm_bitmap, 0xFF, BITMAP_SIZE);
-
   if (memmap_request.response == NULL)
   {
     log(LOG_PANIC, "Mist", "Missing memory map from Limine!");
@@ -37,6 +35,37 @@ void pmm_init(void)
 
   struct limine_memmap_response *mmap = memmap_request.response;
 
+  uintptr_t highest_address = 0;
+  for (uintn_t idx = 0; idx < mmap->entry_count; idx++)
+  {
+    struct limine_memmap_entry *entry = mmap->entries[idx];
+    if (entry->type == LIMINE_MEMMAP_USABLE)
+    {
+      if (entry->base + entry->length > highest_address)
+        highest_address = entry->base + entry->length;
+    }
+  }
+
+  max_blocks = highest_address / PMM_BLOCK_SIZE;
+  bitmap_size = (max_blocks + 7) / 8;
+
+  for (uintn_t idx = 0; idx < mmap->entry_count; idx++)
+  {
+    struct limine_memmap_entry *entry = mmap->entries[idx];
+    if (entry->type == LIMINE_MEMMAP_USABLE && entry->length >= bitmap_size)
+    {
+      pmm_bitmap = (uint8_t*)(entry->base + hhdm_offset);
+      break;
+    }
+  }
+
+  if (pmm_bitmap == NULL)
+  {
+    log(LOG_PANIC, "Mist", "No suitable memory found for PMM bitmap!");
+    while(1);
+  }
+
+  memset(pmm_bitmap, 0xFF, bitmap_size);
   for (uintn_t idx = 0; idx < mmap->entry_count; idx++)
   {
     struct limine_memmap_entry *entry = mmap->entries[idx];
@@ -47,9 +76,6 @@ void pmm_init(void)
 
       for (uintptr_t j = 0; j < blocks; j++)
         bitmap_clear(start_block + j);
-
-      if (start_block + blocks > max_blocks)
-        max_blocks = start_block + blocks;
     }
   }
 
