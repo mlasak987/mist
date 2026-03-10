@@ -28,12 +28,5 @@ void init(void)
   initramfs_init();
 
   log(LOG_INFO, "Mist", "System initialized.");
-  log(LOG_INFO, "Mist", "Press 'ENTER' to enter the Mist Kernel Shell.");
-
-  if (kbd_getchar() == '\n')
-  {
-    kernel_shell_init();
-    kernel_shell_loop();
-  }
 }
 

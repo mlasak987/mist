@@ -9,7 +9,7 @@
 #define __KERNEL_ARCH_ "NULL"
 #endif
 
-#define __KERNEL_SHELL_VERSION_ "0.1.0"
+#define __KERNEL_SHELL_VERSION_ "0.1.1"
 
 void kernel_shell_init();
 void kernel_shell_loop();

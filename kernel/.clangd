@@ -4,7 +4,8 @@ CompileFlags:
     - --target=x86_64-elf
     - -Iinclude
     - -I.
-    - w
+    - -Wall
+    - -Wextra
 
 Index:
   Background: Build

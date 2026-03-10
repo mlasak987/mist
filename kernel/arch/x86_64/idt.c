@@ -5,6 +5,7 @@
 #include "arch/pic.h"
 #include "arch/pit.h"
 #include "drivers/ps2_kbd.h"
+#include "kernel/main.h"
 
 #include "log.h"
 
@@ -34,6 +35,8 @@ extern void isr0(void);
 extern void isr1(void);
 extern void isr2(void);
 extern void isr3(void);
+extern void isr13(void);
+extern void isr14(void);
 extern void isr32(void);
 extern void isr33(void);
 
@@ -60,6 +63,8 @@ void idt_init(void)
   idt_set_gate(1, (uint64_t)isr1, 0x08, 0x8E);
   idt_set_gate(2, (uint64_t)isr2, 0x08, 0x8E);
   idt_set_gate(3, (uint64_t)isr3, 0x08, 0x8E);
+  idt_set_gate(13, (uint64_t)isr13, 0x08, 0x8E);
+  idt_set_gate(14, (uint64_t)isr14, 0x08, 0x8E);
   idt_set_gate(32, (uint64_t)isr32, 0x08, 0x8E);
   idt_set_gate(33, (uint64_t)isr33, 0x08, 0x8E);
   

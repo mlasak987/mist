@@ -16,8 +16,9 @@ void cmd_clear(int argc, char** argv);
 void cmd_echo(int argc, char** argv);
 void cmd_cat(int argc, char** argv);
 void cmd_ls(int argc, char** argv);
+void cmd_ring3(int argc, char** argv);
 
 extern const shell_command_t commands[];
-#define NUM_COMMANDS 5
+#define NUM_COMMANDS 6
 
 #endif
