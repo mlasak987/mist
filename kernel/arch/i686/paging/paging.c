@@ -1,4 +1,4 @@
-#include "arch/i386/paging/paging.h"
+#include "arch/i386/paging.h"
 #include <stdio.h>
 
 uint32_t page_directory[1024] __attribute__((aligned(4096)));

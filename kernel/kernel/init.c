@@ -1,35 +1,32 @@
 #include <stdio.h>
+#include "log.h"
 
-#include "arch/x86_64/gdt.h"
-#include "arch/x86_64/idt.h"
-#include "arch/x86_64/pic.h"
+#include "arch/gdt.h"
+#include "arch/idt.h"
+#include "arch/pic.h"
+#include "arch/pit.h"
 
 #include "drivers/tty.h"
 #include "drivers/ps2_kbd.h"
 #include "mm/pmm.h"
 #include "mm/kheap.h"
 #include "shell/shell.h"
+#include "fs/initramfs.h"
 
 void init(void)
 {
-  printf("[ %c7INFO%cr ] Mist: Booting Mist on %s...\n", 0x1B, 0x1B, __KERNEL_ARCH_);
+  log(LOG_INFO, "Mist", "Booting Mist on %s...", __KERNEL_ARCH_);
+  log(LOG_DEBUG, "Init", "Debug is on.");
 
   gdt_init();
   idt_init();
 
-  pic_remap();
-  asm volatile ("sti");
+  pit_init(1000);
 
   pmm_init();
   kheap_init();
+  initramfs_init();
 
-  printf("[ %c7INFO%cr ] Mist: System initialized.\n", 0x1B, 0x1B);
-  printf("[ %c7INFO%cr ] Mist: Press 'ENTER' to enter the Mist Kernel Shell.\n", 0x1B, 0x1B);
-  
-  if (kbd_getchar() == '\n')
-  {
-    kernel_shell_init();
-    kernel_shell_loop();
-  }
+  log(LOG_INFO, "Mist", "System initialized.");
 }
 

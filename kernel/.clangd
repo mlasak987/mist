@@ -1,7 +1,7 @@
 CompileFlags:
   Add: 
     - -ffreestanding
-    - --target=i686-elf
+    - --target=x86_64-elf
     - -Iinclude
     - -I.
     - -Wall

@@ -3,3 +3,4 @@ timeout: 3
 /Mist v@@VER@@ (@@ARCH@@)
     protocol: limine
     kernel_path: boot():/boot/mist.kernel
+    module_path: boot():/boot/initramfs.tar

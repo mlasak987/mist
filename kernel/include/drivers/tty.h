@@ -3,8 +3,17 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
+
+typedef enum
+{
+  ANSI_STATE_NORMAL,
+  ANSI_STATE_ESC,
+  ANSI_STATE_CSI
+} ansi_state_t;
 
 void terminal_init(void* framebuffer_address, size_t width, size_t height, size_t pitch);
+void terminal_draw_cursor(bool visible);
 void terminal_putchar(char c);
 void terminal_write(const char* data, size_t size);
 void terminal_clear();

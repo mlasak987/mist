@@ -8,7 +8,7 @@ LOG_LEVEL ?= INFO
 VER ?= 0.1.0
 
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -I./include/ -I../libc/include/ \
-         -DLOG_LEVEL_$(LOG_LEVEL) -D__KERNEL_ARCH_=\"$(ARCH)\" -D__OS_VERSION_=\"$(VER)\" -MD -MP
+         -DLOG_LEVEL_$(LOG_LEVEL) -D__KERNEL_ARCH_=\"$(ARCH)\" -D__$(ARCH)__ -D__OS_VERSION_=\"$(VER)\" -MD -MP -Wno-unused-parameter
 
 ifeq ($(ARCH), x86_64)
     CFLAGS += -mno-red-zone -mcmodel=kernel -mno-mmx -mno-sse -mno-sse2
@@ -19,7 +19,7 @@ else
     LDFLAGS = -ffreestanding -O2 -nostdlib -lgcc
 endif
 
-SRC_DIRS = arch/$(ARCH) kernel drivers mm shell
+SRC_DIRS = arch/share arch/$(ARCH) kernel drivers mm shell fs
 BUILD_DIR = build
 LINKER_SCRIPT = arch/$(ARCH)/linker.ld
 

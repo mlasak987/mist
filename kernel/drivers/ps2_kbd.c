@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "arch/i386/io.h"
+#include "arch/io.h"
 #include "drivers/ps2_kbd.h"
 
 #define KBD_BUFFER_SIZE 256
@@ -44,6 +44,11 @@ void kbd_handler(void)
     }
   }
   outb(0x20, 0x20);
+}
+
+bool kbd_has_key(void)
+{
+  return kbd_head != kbd_tail;
 }
 
 char kbd_getchar(void)
